@@ -32,13 +32,12 @@
   (frequencies-partition-then-fold (mapcat get-words pages) partition-size))
 
 (defn -main [& args]
-  (let [[page-count filename algorithm psize] args
-        pages (get-pages (Integer. page-count) filename)
-        partition-size (Integer. psize)]
+  (let [[page-count filename algorithm psize] args]
     (time
       (case algorithm
-        "sequential" (count-words-sequential pages)
-        "fold" (count-words-fold pages)
-        "pmap" (count-words-pmap pages partition-size)
-        "pthenf" (count-words-partition-then-fold pages partition-size))))
+        "sequential" (count-words-sequential (get-pages (Integer. page-count) filename))
+        "fold" (count-words-fold (get-pages (Integer. page-count) filename))
+        "pmap" (count-words-pmap (get-pages (Integer. page-count) filename) (Integer. psize))
+        "pthenf" (count-words-partition-then-fold (get-pages (Integer. page-count) filename) (Integer. psize)))))
+  (shutdown-agents)
   nil)
