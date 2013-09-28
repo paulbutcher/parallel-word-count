@@ -9,10 +9,15 @@
           (fn [counts word] (assoc counts word (inc (get counts word 0))))
           words))
 
-(defn frequencies-pmap [words]
+(defn frequencies-pmap [words partition-size]
   (reduce (partial merge-with +) 
     (pmap frequencies 
-      (partition-all 10000 words))))
+      (partition-all partition-size words))))
+
+(defn frequencies-partition-then-fold [words partition-size]
+  (reduce (partial merge-with +)
+    (map #(frequencies-fold (into [] %))
+      (partition-all partition-size words))))
 
 (defn count-words-sequential [pages]
   (frequencies (mapcat get-words pages)))
@@ -20,11 +25,19 @@
 (defn count-words-fold [pages]
   (frequencies-fold (r/mapcat get-words (foldable-seq pages))))
 
-(defn count-words-pmap [pages]
-  (frequencies-pmap (mapcat get-words pages)))
+(defn count-words-pmap [pages partition-size]
+  (frequencies-pmap (mapcat get-words pages) partition-size))
+
+(defn count-words-partition-then-fold [pages partition-size]
+  (frequencies-partition-then-fold (mapcat get-words pages) partition-size))
 
 (defn -main [& args]
-  ; (time (count-words-sequential (get-pages 10000 "enwiki.xml")))
-  ; (time (count-words-fold (get-pages 10000 "enwiki.xml")))
-  (time (count-words-pmap (get-pages 10000 "enwiki.xml")))
+  (let [[page-count filename algorithm partition-size] args
+        pages (get-pages (Integer. page-count) filename)]
+    (time
+      (case algorithm
+        "sequential" (count-words-sequential pages)
+        "fold" (count-words-fold pages)
+        "pmap" (count-words-pmap pages (Integer. partition-size))
+        "pthenf" (count-words-partition-then-fold pages (Integer. partition-size)))))
   nil)
