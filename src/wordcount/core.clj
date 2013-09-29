@@ -31,6 +31,16 @@
 (defn count-words-partition-then-fold [pages partition-size]
   (frequencies-partition-then-fold (mapcat get-words pages) partition-size))
 
+(defn count-words-partitioned
+  [pages partition-size]
+  (->> (partition partition-size pages)
+       (pmap #(reduce
+               (fn [m page]
+                 (merge-with + m (frequencies (get-words page))))
+               {}
+               %))
+       (reduce (partial merge-with +))))
+
 (defn -main [& args]
   (let [[page-count filename algorithm psize] args]
     (time
@@ -38,6 +48,7 @@
         "sequential" (count-words-sequential (get-pages (Integer. page-count) filename))
         "fold" (count-words-fold (get-pages (Integer. page-count) filename))
         "pmap" (count-words-pmap (get-pages (Integer. page-count) filename) (Integer. psize))
-        "pthenf" (count-words-partition-then-fold (get-pages (Integer. page-count) filename) (Integer. psize)))))
+        "pthenf" (count-words-partition-then-fold (get-pages (Integer. page-count) filename) (Integer. psize))
+        "partitioned" (count-words-partitioned (get-pages (Integer. page-count) filename) (Integer. psize)))))
   (shutdown-agents)
   nil)
