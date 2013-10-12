@@ -41,6 +41,10 @@
                %))
        (reduce (partial merge-with +))))
 
+(defn count-words-pmap-merge [pages]
+  (reduce (partial merge-with +)
+    (pmap #(frequencies (get-words %)) pages)))
+
 (defn -main [& args]
   (let [[page-count filename algorithm psize] args]
     (time
@@ -49,6 +53,7 @@
         "fold" (count-words-fold (get-pages (Integer. page-count) filename))
         "pmap" (count-words-pmap (get-pages (Integer. page-count) filename) (Integer. psize))
         "pthenf" (count-words-partition-then-fold (get-pages (Integer. page-count) filename) (Integer. psize))
-        "partitioned" (count-words-partitioned (get-pages (Integer. page-count) filename) (Integer. psize)))))
+        "partitioned" (count-words-partitioned (get-pages (Integer. page-count) filename) (Integer. psize))
+        "pmap-merge" (count-words-pmap-merge (get-pages (Integer. page-count) filename)))))
   (shutdown-agents)
   nil)
